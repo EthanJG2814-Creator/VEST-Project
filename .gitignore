@@ -1,3 +1,3 @@
 .vs/
-bin/
-obj/
+VEST/obj/Debug
+VEST/obj/Release
