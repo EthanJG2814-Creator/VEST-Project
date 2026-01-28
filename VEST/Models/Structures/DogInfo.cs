@@ -1,4 +1,4 @@
-﻿namespace VEST.Structures
+﻿namespace VEST.Models.Structures
 {
     /// <summary>
     /// The basic information about a dog.

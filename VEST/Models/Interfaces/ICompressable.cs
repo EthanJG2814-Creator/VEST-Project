@@ -1,4 +1,4 @@
-﻿namespace VEST.Interfaces
+﻿namespace VEST.Models.Interfaces
 {
     /// <summary>
     /// Defines a contract for objects that support Huffman compression for storage or transmission. T should be the implementing type.

@@ -1,4 +1,4 @@
-﻿namespace VEST.Structures
+﻿namespace VEST.Models.Structures
 {
     /// <summary>
     /// This struct represents a single data point in time for the dog, containing various health metrics.
@@ -8,6 +8,6 @@
         public readonly DateTime Timestamp = timestamp;
         public readonly int Bpm = bpm;
         public readonly float Temperature = temperature;
-        /*Todo: Add other health metrics that are needed as they come up.*/
+        /*TODO: Add other health metrics that are needed as they come up.*/
     }
 }
