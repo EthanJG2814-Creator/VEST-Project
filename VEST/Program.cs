@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using VEST.API;
 
 namespace VEST
 {
@@ -16,7 +17,8 @@ namespace VEST
         }
         static void Main(string[] args)
         {
-            
+            Console.WriteLine("Testing api call...");
+            Console.WriteLine(VestAPICaller.CallExampleEndpoint().GetAwaiter().GetResult().response?.ToString());
         }
     }
 }

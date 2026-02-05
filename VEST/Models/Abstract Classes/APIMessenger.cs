@@ -10,9 +10,27 @@ namespace VEST.Models.Abstract_Classes
     {
         #region Static Variables
         /// <summary>
+        /// Represents the base URL for the main REST API endpoint.
+        /// </summary>
+        /// <remarks>
+        /// Use this URL as the root when constructing requests to the application's primary REST
+        /// API. The value is constant and should not be modified.
+        /// </remarks>
+        public static readonly string MAIN_API_URL = @"https://mamtmjwuwtxxpqzdcfmt.supabase.co/rest/v1/";
+
+        /// <summary>
         /// The HTTP client used for sending requests. This will only be initialized once, at the start of the program.
         /// </summary>
-        protected static readonly HttpClient client = new();
+        protected static readonly HttpClient client = new()
+        {
+            BaseAddress = new Uri(MAIN_API_URL), //Set the base address for the HTTP client to the main API URL.  
+            DefaultRequestHeaders = 
+            {
+                { "Accept", "application/json" }, //Set the default Accept header to indicate that we want JSON responses.
+                { "User-Agent", "VEST API Client" }, //Set a custom User-Agent header for identification purposes.
+                { "apikey", "sb_secret_JoarZAtTF5xUY1kpZzGvzQ_JKBgZcYW" } //Add the API key to the default request headers for authentication.
+            }
+        };
         /// <summary>
         /// The throttler used to regulate API call rates. Currently set to allow 50 calls per minute.
         /// </summary>
