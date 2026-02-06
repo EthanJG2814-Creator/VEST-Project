@@ -19,19 +19,6 @@ namespace VEST.Models.Abstract_Classes
         public static readonly string MAIN_API_URL = @"https://mamtmjwuwtxxpqzdcfmt.supabase.co/rest/v1/";
 
         /// <summary>
-        /// The HTTP client used for sending requests. This will only be initialized once, at the start of the program.
-        /// </summary>
-        protected static readonly HttpClient client = new()
-        {
-            BaseAddress = new Uri(MAIN_API_URL), //Set the base address for the HTTP client to the main API URL.  
-            DefaultRequestHeaders = 
-            {
-                { "Accept", "application/json" }, //Set the default Accept header to indicate that we want JSON responses.
-                { "User-Agent", "VEST API Client" }, //Set a custom User-Agent header for identification purposes.
-                { "apikey", "sb_secret_JoarZAtTF5xUY1kpZzGvzQ_JKBgZcYW" } //Add the API key to the default request headers for authentication.
-            }
-        };
-        /// <summary>
         /// The throttler used to regulate API call rates. Currently set to allow 50 calls per minute.
         /// </summary>
         protected static readonly Throttler throttler = new(50, 60);
@@ -51,10 +38,11 @@ namespace VEST.Models.Abstract_Classes
         /// successful, along with the HTTP response message.
         /// </summary>
         /// <param name="request">The HTTP request message to send. Cannot be null.</param>
+        /// <param name="client">The HTTP client to use for sending the request. Cannot be null.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a tuple with a Boolean value
         /// indicating whether the request was sent successfully, and the corresponding HTTP response message if
         /// available; otherwise, null.</returns>
-        protected static async Task<(bool success, HttpResponseMessage? response)> SendInfo(HttpRequestMessage request)
+        protected static async Task<(bool success, HttpResponseMessage? response)> SendInfo(HttpRequestMessage request, HttpClient client)
         {
             HttpResponseMessage? response;
             try
@@ -70,7 +58,7 @@ namespace VEST.Models.Abstract_Classes
                 {
                     Program.Log.LogInformation("A successful request was sent to \"{RequestUri}\". Retrying buffered requests.", request.RequestUri);
 #pragma warning disable CS4014 // This call is not awaited because we want it to run in the background. We handle concurrency within the method itself.
-                    Task.Run(RetryBufferedRequests);
+                    Task.Run(() => RetryBufferedRequests(client));
 #pragma warning restore CS4014
                 }
 
@@ -98,12 +86,13 @@ namespace VEST.Models.Abstract_Classes
         /// Synchronously sends the <paramref name="request"/> and outputs a response message (null if failed). Returns whether the operation was successful.
         /// </summary>
         /// <param name="request">The request to send.</param>
+        /// <param name="client">The HTTP client to use for sending the request. Cannot be null.</param>
         /// <param name="response">The response for a given request.</param>
         /// <returns>Whether or not the operation was successful.</returns>
-        protected static bool SendInfo(HttpRequestMessage request, out HttpResponseMessage? response)
+        protected static bool SendInfo(HttpRequestMessage request, HttpClient client, out HttpResponseMessage? response)
         {
             bool outp;
-            (outp, response) = SendInfo(request).GetAwaiter().GetResult();
+            (outp, response) = SendInfo(request, client).GetAwaiter().GetResult();
             return outp;
         }
         #endregion
@@ -111,6 +100,7 @@ namespace VEST.Models.Abstract_Classes
         /// <summary>
         /// Attempts to resend all buffered HTTP requests that previously failed and are pending retry.
         /// </summary>
+        /// <param name="client">The HTTP client to use for sending the request. Cannot be null.</param>
         /// <remarks>
         /// If another retry operation is already in progress, this method does not perform any
         /// retries and returns immediately. Successfully retried requests are removed from the buffer; requests that
@@ -118,7 +108,7 @@ namespace VEST.Models.Abstract_Classes
         /// operations.
         /// </remarks>
         /// <returns>A task that represents the asynchronous retry operation.</returns>
-        public static async Task RetryBufferedRequests()
+        public static async Task RetryBufferedRequests(HttpClient client)
         {
             AsyncLock.Releaser? theLock = await RetryRequestsLock.TryLockAsync();
             if (theLock is null)
@@ -134,7 +124,7 @@ namespace VEST.Models.Abstract_Classes
                 while (requestBuffer.Count > 0)
                 {
                     HttpRequestMessage request = requestBuffer.Pop();
-                    var (success, _) = await SendInfo(request).ConfigureAwait(false);
+                    var (success, _) = await SendInfo(request, client).ConfigureAwait(false);
                     if (success)
                     {
                         successCount++;
