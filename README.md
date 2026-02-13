@@ -1,5 +1,4 @@
 # VEST Project
-TODO
 ## Packages
 Here are all external packages used in this project and why
 - Newtonsoft \
@@ -8,3 +7,14 @@ Here are all external packages used in this project and why
     This package is used to help build an api service on the back end for the front end.
 - Microsoft.Extensions.Logging & Microsoft.Extensions.Logging.Console \
     These packages are for logging issues to the console. This can be used for debugging and helping the programmer follow what is happening in the program.
+
+# VEST App
+
+1. `yarn install`
+2. `cd ios && pod install && cd ..`
+3. `yarn start`
+4. `yarn ios:quick`
+
+Fast rerun (when Metro is already running):
+
+`npx react-native run-ios --no-packager --simulator "iPhone 17 Pro"`
