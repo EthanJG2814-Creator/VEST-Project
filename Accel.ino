@@ -65,15 +65,15 @@ void setup() {
   Serial.println(F("Calibrating... Keep sensors still."));
   
   // Calibrate MPU1
-  mpu1.calcOffsets(false,false); 
+  mpu1.calcOffsets(true,true); 
   
   // Calibrate MPU2 (Switch pins first)
   I2C_1.begin(SDA_2, SCL_2, 400000);
-  mpu2.calcOffsets(false,false);
+  mpu2.calcOffsets(true,true);
   
   // Calibrate MPU3 (Switch pins first)
   I2C_1.begin(SDA_3, SCL_3, 400000);
-  mpu3.calcOffsets(false,false);
+  mpu3.calcOffsets(true,true);
   
   // Header
   Serial.print("Timestamp_ms");
@@ -89,15 +89,19 @@ void loop() {
   mpu1.update();
 
   // 2. Update MPU 2 (Switch Bus 1 to MPU2 pins)
+  //I2C_1.end();
   I2C_1.begin(SDA_2, SCL_2, 400000);
   mpu2.update();
 
+  delay(100);
+
   // 3. Update MPU 3 (Switch Bus 1 to MPU3 pins)
+  //I2C_1.end();
   I2C_1.begin(SDA_3, SCL_3, 400000);
   mpu3.update();
 
   // --- PRINT SEQUENCE ---
-  if(millis() - timer > 100){ 
+  if(millis() - timer > 96){ 
     
     Serial.print(millis());
     Serial.print(",");
