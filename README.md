@@ -8,13 +8,12 @@ Here are all external packages used in this project and why
 - Microsoft.Extensions.Logging & Microsoft.Extensions.Logging.Console \
     These packages are for logging issues to the console. This can be used for debugging and helping the programmer follow what is happening in the program.
 
-# VEST App
-
-1. `yarn install`
-2. `cd ios && pod install && cd ..`
-3. `yarn start`
-4. `yarn ios:quick`
-
-Fast rerun (when Metro is already running):
-
-`npx react-native run-ios --no-packager --simulator "iPhone 17 Pro"`
+# VEST App Start Guide
+1. 
+cd VEST_expo_app
+2.
+npm install 
+3. 
+npx expo start
+4.
+Scan QR code with phone (have Expo Go app installed)
