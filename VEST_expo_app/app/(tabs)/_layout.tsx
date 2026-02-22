@@ -7,6 +7,13 @@ export default function TabLayout() {
         headerShown: false,
       }}>
       <Tabs.Screen
+        name="index"
+        options={{
+          // Hide the default index route from the tab bar
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="home"
         options={{
           title: 'Home',

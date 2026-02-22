@@ -6,46 +6,12 @@ bin/
 #
 .DS_Store
 
-# Xcode
-#
-build/
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata
-ios/.xcode.env.local
-*.xccheckout
-*.moved-aside
-DerivedData
-*.hmap
-*.ipa
-*.xcuserstate
-project.xcworkspace
-
-# Android/IntelliJ
-#
-build/
-.idea
-.gradle
-local.properties
-*.iml
-*.hprof
-.cxx/
-*.keystore
-/VEST_App/android/keystore.properties
-!debug.keystore
-!/android/app/debug.keystore
-
 # node.js
 #
 node_modules/
-npm-debug.log
-yarn-error.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
 
 
 # fastlane
@@ -65,17 +31,22 @@ yarn-error.log
 
 jest_coverage
 
-# Ruby / CocoaPods
-/ios/Pods/
-/vendor/bundle/
-/VEST_App/ios/Pods/
-/VEST_App/ios/build/
-/VEST_App/ios/DerivedData/
-/VEST_App/android/.gradle/
-/VEST_App/android/app/build/
-/VEST_App/android/build/
-/VEST_App/.bundle/
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
 # testing
 /coverage
