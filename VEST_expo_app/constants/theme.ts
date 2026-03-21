@@ -1,53 +1,122 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    background: '#F2F2F7',
+    foreground: '#1C1C1E',
+    card: '#FFFFFF',
+    cardForeground: '#1C1C1E',
+    primary: '#007AFF',
+    primaryForeground: '#FFFFFF',
+    secondary: '#E5E5EA',
+    secondaryForeground: '#1C1C1E',
+    muted: '#E5E5EA',
+    mutedForeground: '#8E8E93',
+    accent: '#E5E5EA',
+    accentForeground: '#1C1C1E',
+    destructive: '#FF3B30',
+    border: '#C6C6C8',
+    text: '#1C1C1E',
+    tint: '#007AFF',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
+    tabIconSelected: '#007AFF',
+
+    rose500: '#F43F5E',
+    blue500: '#3B82F6',
+    teal400: '#2DD4BF',
+    teal500: '#14B8A6',
+    emerald500: '#10B981',
+    amber500: '#F59E0B',
+    orange500: '#F97316',
+    green400: '#4ADE80',
+    green500: '#22C55E',
+    indigo400: '#818CF8',
+    purple500: '#A855F7',
+    sky400: '#38BDF8',
+    red500: '#EF4444',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    background: '#000000',
+    foreground: '#FFFFFF',
+    card: '#1C1C1E',
+    cardForeground: '#FFFFFF',
+    primary: '#0A84FF',
+    primaryForeground: '#FFFFFF',
+    secondary: '#2C2C2E',
+    secondaryForeground: '#FFFFFF',
+    muted: '#2C2C2E',
+    mutedForeground: '#8E8E93',
+    accent: '#2C2C2E',
+    accentForeground: '#FFFFFF',
+    destructive: '#FF453A',
+    border: '#38383A',
+    text: '#FFFFFF',
+    tint: '#0A84FF',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
+    tabIconSelected: '#0A84FF',
+
+    rose500: '#F43F5E',
+    blue500: '#3B82F6',
+    teal400: '#2DD4BF',
+    teal500: '#14B8A6',
+    emerald500: '#10B981',
+    amber500: '#F59E0B',
+    orange500: '#F97316',
+    green400: '#4ADE80',
+    green500: '#22C55E',
+    indigo400: '#818CF8',
+    purple500: '#A855F7',
+    sky400: '#38BDF8',
+    red500: '#EF4444',
   },
+};
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+export const BorderRadius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  full: 9999,
+};
+
+export const FontSizes = {
+  caption2: 11,
+  caption: 12,
+  footnote: 13,
+  subhead: 15,
+  body: 17,
+  title3: 20,
+  title2: 22,
+  title1: 28,
+  largeTitle: 34,
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+    regular: { fontFamily: 'System', fontWeight: '400' as const },
+    medium: { fontFamily: 'System', fontWeight: '500' as const },
+    semibold: { fontFamily: 'System', fontWeight: '600' as const },
+    bold: { fontFamily: 'System', fontWeight: '700' as const },
+    heavy: { fontFamily: 'System', fontWeight: '800' as const },
   },
   default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    regular: { fontWeight: '400' as const },
+    medium: { fontWeight: '500' as const },
+    semibold: { fontWeight: '600' as const },
+    bold: { fontWeight: '700' as const },
+    heavy: { fontWeight: '800' as const },
   },
 });

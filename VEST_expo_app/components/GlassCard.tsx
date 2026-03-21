@@ -1,47 +1,44 @@
 import React from 'react';
-import { StyleSheet, View, type ViewProps } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { useAppTheme } from '@/hooks/use-app-theme';
+import { StyleSheet, View, type ViewStyle, type StyleProp, useColorScheme } from 'react-native';
 import { BorderRadius } from '@/constants/theme';
 
-interface GlassCardProps extends ViewProps {
+interface GlassCardProps {
   children: React.ReactNode;
-  intensity?: number;
+  style?: StyleProp<ViewStyle>;
   noPadding?: boolean;
 }
 
-export function GlassCard({ children, style, intensity = 40, noPadding, ...props }: GlassCardProps) {
-  const { isDark } = useAppTheme();
+export function GlassCard({ children, style, noPadding }: GlassCardProps) {
+  const isDark = useColorScheme() === 'dark';
 
   return (
-    <View style={[styles.wrapper, style]} {...props}>
-      <BlurView
-        intensity={intensity}
-        tint={isDark ? 'dark' : 'light'}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[
-        styles.overlay,
-        { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)' },
-      ]} />
-      <View style={[styles.content, noPadding && { padding: 0 }]}>
-        {children}
-      </View>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: isDark
+            ? 'rgba(255,255,255,0.06)'
+            : 'rgba(255,255,255,0.8)',
+          borderColor: isDark
+            ? 'rgba(255,255,255,0.08)'
+            : 'rgba(0,0,0,0.06)',
+        },
+        !noPadding && styles.padding,
+        style,
+      ]}
+    >
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  card: {
     borderRadius: BorderRadius.xl,
+    borderWidth: 1,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.15)',
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  content: {
+  padding: {
     padding: 16,
   },
 });

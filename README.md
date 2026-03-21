@@ -9,11 +9,14 @@ Here are all external packages used in this project and why
     These packages are for logging issues to the console. This can be used for debugging and helping the programmer follow what is happening in the program.
 
 # VEST App Start Guide
-1. 
-cd VEST_expo_app
-2.
-npm install 
-3. 
-npx expo start
-4.
-Scan QR code with phone (have Expo Go app installed)
+1. cd VEST_expo_app
+2. npm install 
+3. npx expo start
+4. Scan QR code with phone (have Expo Go app installed)
+
+# Running ios dev build:
+
+ https://docs.expo.dev/get-started/set-up-your-environment/?mode=development-build&buildEnv=local&platform=ios&device=physical#plug-in-your-device-via-usb-and-enable-developer-mode
+
+1. npx expo prebuild --clean # if any major changes were made to Installing or updating a library containing native code Changing app config(app.json) Upgrading your Expo SDK version
+2. npx expo run:ios --device

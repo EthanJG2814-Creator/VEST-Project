@@ -1,16 +1,28 @@
 import { Stack } from 'expo-router';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 export default function HomeLayout() {
+  const { colors } = useAppTheme();
+
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: 'Home / Dashboard' }} />
-      <Stack.Screen name="live-alerts" options={{ title: 'Live Alerts' }} />
-      <Stack.Screen name="alert-details" options={{ title: 'Alert Details' }} />
-      <Stack.Screen name="recommendations" options={{ title: 'Recommendations' }} />
-      <Stack.Screen name="share-vet" options={{ title: 'Share with Vet' }} />
-      <Stack.Screen name="live-data" options={{ title: 'Live Data' }} />
-      <Stack.Screen name="sensor-graphs" options={{ title: 'Sensor Graphs' }} />
-      <Stack.Screen name="sensor-details" options={{ title: 'Sensor Details' }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: 'transparent' },
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="live-alerts" />
+      <Stack.Screen
+        name="alert-details"
+        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+      />
+      <Stack.Screen name="recommendations" />
+      <Stack.Screen name="share-vet" />
+      <Stack.Screen name="live-data" />
+      <Stack.Screen name="sensor-graphs" />
+      <Stack.Screen name="sensor-details" />
     </Stack>
   );
 }
