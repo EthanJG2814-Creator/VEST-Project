@@ -16,12 +16,7 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import { BorderRadius, FontSizes, Spacing } from '@/constants/theme';
 import { useBle } from '@/hooks/use-ble';
 
-const mentalModel = [
-  { title: 'Central', desc: 'Your Expo app scans and connects.', icon: 'phone-portrait-outline' as const },
-  { title: 'Peripheral', desc: 'The VEST device exposes data.', icon: 'hardware-chip-outline' as const },
-  { title: 'Service', desc: 'Grouping of related characteristics.', icon: 'albums-outline' as const },
-  { title: 'Characteristic', desc: 'Individual data source to read/notify.', icon: 'pulse-outline' as const },
-];
+
 
 export default function BluetoothWizardScreen() {
   const insets = useSafeAreaInsets();
@@ -35,10 +30,30 @@ export default function BluetoothWizardScreen() {
     isConnecting,
     allDevices,
     connectToDevice,
+    disconnectFromDevice,
     connectedDevice,
-    color,
+    sensorData,
+    isStreaming,
+    isSending,
+    sendDataToDevice,
+    isBleReady,
+    bleUnavailableReason,
     logs,
   } = useBle();
+
+  const handleSendTestPayload = async () => {
+    await sendDataToDevice({
+      type: 'vest-test-payload',
+      sentAt: new Date().toISOString(),
+      latestSensorData: sensorData,
+      source: 'bluetooth-wizard',
+    });
+  };
+
+  const truncate = (value: string | null | undefined, max = 22) => {
+    if (!value) return 'Unknown peripheral';
+    return value.length > max ? `${value.slice(0, max - 1)}…` : value;
+  };
 
   const checklist = [
     {
@@ -66,10 +81,12 @@ export default function BluetoothWizardScreen() {
       done: Boolean(connectedDevice),
     },
     {
-      title: color ? 'Receiving data' : 'Subscribe to notifications',
-      desc: color ? `Latest value: ${color}` : 'Live data starts once connected.',
+      title: isStreaming ? 'Receiving data' : 'Subscribe to notifications',
+      desc: isStreaming
+        ? `Latest value: ${sensorData ?? 'Waiting for first packet'}`
+        : 'Live data starts once connected.',
       icon: 'pulse-outline' as const,
-      done: Boolean(color),
+      done: isStreaming || sensorData !== null,
     },
   ];
 
@@ -91,38 +108,27 @@ export default function BluetoothWizardScreen() {
               Scan, connect, and subscribe to your VEST device.
             </Text>
           </View>
-          <View style={[styles.pill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}> 
-            <Ionicons name="build-outline" size={14} color={colors.primary} />
-            <Text style={[styles.pillText, { color: colors.primary }]}>Dev build required</Text>
-          </View>
         </View>
 
         <View style={{ gap: Spacing.md, paddingHorizontal: Spacing.xl }}>
-          <GlassCard>
-            <View style={{ gap: Spacing.sm }}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Mental model</Text>
-              <Text style={{ color: colors.mutedForeground, fontSize: FontSizes.subhead }}>
-                BLE flow: Central → scan → connect → discover services/characteristics → subscribe to Notify.
-              </Text>
-              <View style={styles.badgeRow}>
-                {mentalModel.map((item) => (
-                  <View
-                    key={item.title}
-                    style={[
-                      styles.badge,
-                      { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
-                    ]}
-                  >
-                    <Ionicons name={item.icon} size={16} color={colors.primary} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.badgeTitle, { color: colors.foreground }]}>{item.title}</Text>
-                      <Text style={[styles.badgeDesc, { color: colors.mutedForeground }]}>{item.desc}</Text>
-                    </View>
-                  </View>
-                ))}
+          {!isBleReady && (
+            <GlassCard>
+              <View
+                style={[
+                  styles.noticeRow,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(245,158,11,0.16)',
+                  },
+                ]}
+              >
+                <Ionicons name="information-circle-outline" size={18} color={colors.foreground} />
+                <Text style={[styles.noticeText, { color: colors.foreground }]}>
+                  {bleUnavailableReason ?? 'Bluetooth is unavailable in this environment.'}
+                </Text>
               </View>
-            </View>
-          </GlassCard>
+            </GlassCard>
+          )}
 
           <GlassCard>
             <View style={{ gap: Spacing.sm }}>
@@ -151,7 +157,7 @@ export default function BluetoothWizardScreen() {
                             borderColor: step.done ? colors.border : 'transparent',
                           },
                         ]}
-                        disabled={isConnecting}
+                        disabled={isConnecting || !isBleReady}
                       >
                         {isScanning && step.cta === 'Stop scan' ? (
                           <ActivityIndicator color={colors.primaryForeground} />
@@ -183,32 +189,58 @@ export default function BluetoothWizardScreen() {
                 <View style={[styles.emptyState, { borderColor: colors.border }]}> 
                   <Ionicons name="search-outline" size={18} color={colors.mutedForeground} />
                   <Text style={{ color: colors.mutedForeground, fontSize: FontSizes.subhead }}>
-                    Start a scan to see peripherals.
+                    {isBleReady ? 'Start a scan to see peripherals.' : 'BLE controls are disabled on web preview.'}
                   </Text>
                 </View>
               ) : (
                 <View style={{ gap: Spacing.sm }}>
-                  {allDevices.map((device) => (
-                    <View key={device.id} style={[styles.deviceRow, { borderColor: colors.border }]}> 
-                      <View>
-                        <Text style={[styles.deviceName, { color: colors.foreground }]}>
-                          {device.name ?? device.localName ?? 'Unknown peripheral'}
-                        </Text>
-                        <Text style={[styles.deviceMeta, { color: colors.mutedForeground }]}>{device.id}</Text>
+                  {allDevices.map((device) => {
+                    const isCurrent = connectedDevice?.id === device.id;
+                    const displayName = truncate(device.name ?? device.localName, 22);
+                    const displayId = truncate(device.id, 28);
+
+                    return (
+                      <View key={device.id} style={[styles.deviceRow, { borderColor: colors.border }]}> 
+                        <View style={styles.deviceInfo}>
+                          <Text
+                            style={[styles.deviceName, { color: colors.foreground }]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {displayName}
+                          </Text>
+                          <Text
+                            style={[styles.deviceMeta, { color: colors.mutedForeground }]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {displayId}
+                          </Text>
+                        </View>
+                        <Pressable
+                          onPress={() => (isCurrent ? disconnectFromDevice() : connectToDevice(device))}
+                          style={[
+                            styles.connectBtn,
+                            { backgroundColor: isCurrent ? colors.border : colors.primary },
+                          ]}
+                          disabled={isConnecting || !isBleReady}
+                        >
+                          {isConnecting ? (
+                            <ActivityIndicator color={colors.primaryForeground} />
+                          ) : (
+                            <Text
+                              style={[
+                                styles.connectBtnText,
+                                { color: isCurrent ? colors.foreground : colors.primaryForeground },
+                              ]}
+                            >
+                              {isCurrent ? 'Disconnect' : 'Connect'}
+                            </Text>
+                          )}
+                        </Pressable>
                       </View>
-                      <Pressable
-                        onPress={() => connectToDevice(device)}
-                        style={[styles.connectBtn, { backgroundColor: colors.primary }]}
-                        disabled={isConnecting}
-                      >
-                        {isConnecting ? (
-                          <ActivityIndicator color={colors.primaryForeground} />
-                        ) : (
-                          <Text style={[styles.connectBtnText, { color: colors.primaryForeground }]}>Connect</Text>
-                        )}
-                      </Pressable>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               )}
             </View>
@@ -218,17 +250,41 @@ export default function BluetoothWizardScreen() {
             <View style={{ gap: Spacing.md }}>
               <View style={styles.cardHeaderRow}>
                 <Text style={[styles.cardTitle, { color: colors.foreground }]}>Connection status</Text>
-                {connectedDevice ? (
-                  <View style={[styles.statusPill, { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }]}> 
-                    <Ionicons name="ellipse" size={10} color={colors.green400} />
-                    <Text style={[styles.statusText, { color: colors.green400 }]}>Connected</Text>
-                  </View>
-                ) : (
-                  <View style={[styles.statusPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}> 
-                    <Ionicons name="pause-circle-outline" size={14} color={colors.mutedForeground} />
-                    <Text style={[styles.statusText, { color: colors.mutedForeground }]}>Idle</Text>
-                  </View>
-                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+                  {connectedDevice && (
+                    <Pressable
+                      onPress={handleSendTestPayload}
+                      style={[styles.actionBtn, { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: colors.primary, borderColor: 'transparent' }]}
+                      disabled={isConnecting || isSending}
+                    >
+                      {isSending ? (
+                        <ActivityIndicator color={colors.primaryForeground} />
+                      ) : (
+                        <Text style={{ color: colors.primaryForeground, fontWeight: '700' }}>Send test JSON</Text>
+                      )}
+                    </Pressable>
+                  )}
+                  {connectedDevice && (
+                    <Pressable
+                      onPress={disconnectFromDevice}
+                      style={[styles.actionBtn, { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: 'transparent', borderColor: colors.border }]}
+                      disabled={isConnecting}
+                    >
+                      <Text style={{ color: colors.foreground, fontWeight: '700' }}>Disconnect</Text>
+                    </Pressable>
+                  )}
+                  {connectedDevice ? (
+                    <View style={[styles.statusPill, { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }]}> 
+                      <Ionicons name="ellipse" size={10} color={colors.green400} />
+                      <Text style={[styles.statusText, { color: colors.green400 }]}>Connected</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.statusPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}> 
+                      <Ionicons name="pause-circle-outline" size={14} color={colors.mutedForeground} />
+                      <Text style={[styles.statusText, { color: colors.mutedForeground }]}>Idle</Text>
+                    </View>
+                  )}
+                </View>
               </View>
 
               <View style={[styles.statusRow, { borderColor: colors.border }]}> 
@@ -242,23 +298,18 @@ export default function BluetoothWizardScreen() {
               </View>
 
               <View style={[styles.statusRow, { borderColor: colors.border }]}> 
-                <Ionicons name="color-filter-outline" size={18} color={colors.primary} />
+                <Ionicons name="pulse-outline" size={18} color={colors.primary} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.stepTitle, { color: colors.foreground }]}>Live characteristic value</Text>
                   <Text style={[styles.stepDesc, { color: colors.mutedForeground }]}> 
-                    {color ? `Decoded color: ${color}` : 'Waiting for notify events…'}
+                    {isStreaming
+                      ? sensorData ?? 'Waiting for first packet'
+                      : 'Waiting for notify events…'}
                   </Text>
                 </View>
-                <View
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    backgroundColor: color ?? 'transparent',
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: colors.border,
-                  }}
-                />
+                <View style={[styles.valuePill, { borderColor: colors.border }]}> 
+                  <Text style={[styles.valueText, { color: colors.foreground }]}>{sensorData ?? '--'}</Text>
+                </View>
               </View>
 
               <View style={{ gap: Spacing.xs }}>
@@ -267,11 +318,14 @@ export default function BluetoothWizardScreen() {
                   {logs.length === 0 ? (
                     <Text style={[styles.logLine, { color: colors.mutedForeground }]}>Actions you take will show up here.</Text>
                   ) : (
-                    logs.slice(0, 5).map((entry) => (
-                      <Text key={entry.ts} style={[styles.logLine, { color: colors.mutedForeground }]}>
-                        · {entry.message}
-                      </Text>
-                    ))
+                    logs.slice(0, 5).map((entry, idx) => {
+                      const logKey = `${entry.ts}-${idx}-${entry.message}`;
+                      return (
+                        <Text key={logKey} style={[styles.logLine, { color: colors.mutedForeground }]}>
+                          · {entry.message}
+                        </Text>
+                      );
+                    })
                   )}
                 </View>
               </View>
@@ -298,26 +352,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: FontSizes.title1, fontWeight: '700', letterSpacing: -0.3 },
   subtitle: { fontSize: FontSizes.subhead },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.lg,
-  },
-  pillText: { fontSize: FontSizes.caption, fontWeight: '700' },
   cardTitle: { fontSize: FontSizes.title3, fontWeight: '700', letterSpacing: -0.2 },
-  badgeRow: { gap: Spacing.xs },
-  badge: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'center',
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  badgeTitle: { fontSize: FontSizes.subhead, fontWeight: '700' },
-  badgeDesc: { fontSize: FontSizes.footnote, lineHeight: 18 },
   stepRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
@@ -362,6 +397,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: StyleSheet.hairlineWidth,
   },
+  deviceInfo: { flex: 1, marginRight: Spacing.sm },
   deviceName: { fontSize: FontSizes.subhead, fontWeight: '700' },
   deviceMeta: { fontSize: FontSizes.caption },
   connectBtn: {
@@ -387,11 +423,33 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: StyleSheet.hairlineWidth,
   },
+  valuePill: {
+    minWidth: 48,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  valueText: { fontSize: FontSizes.subhead, fontWeight: '700' },
   logBox: {
     borderRadius: BorderRadius.md,
     borderWidth: StyleSheet.hairlineWidth,
     padding: Spacing.sm,
     gap: 4,
+  },
+  noticeRow: {
+    borderRadius: BorderRadius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.sm,
+    gap: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: FontSizes.footnote,
+    fontWeight: '600',
   },
   logLine: { fontSize: FontSizes.footnote },
 });

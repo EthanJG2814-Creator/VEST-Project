@@ -15,13 +15,14 @@ import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { GlassCard } from '@/components/GlassCard';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { useDogProfile } from '@/hooks/use-dog-profile';
 import { FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 
 const vitals = {
-  hr: 78,
+  hr: 110,
   resp: 18,
   temp: 101.5,
-  battery: 82,
+  battery: 77,
   status: 'Normal',
 };
 
@@ -32,6 +33,7 @@ const alerts = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
+  const { selectedProfile } = useDogProfile();
 
   return (
     <View style={styles.root}>
@@ -47,11 +49,11 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&h=100&fit=crop' }}
+              source={{ uri: selectedProfile.image }}
               style={styles.avatar}
             />
             <View>
-              <Text style={[styles.dogName, { color: colors.foreground }]}>Max</Text>
+              <Text style={[styles.dogName, { color: colors.foreground }]}>{selectedProfile.name}</Text>
               <View style={styles.statusRow}>
                 <Ionicons name="wifi" size={12} color={colors.mutedForeground} />
                 <Text style={[styles.statusText, { color: colors.mutedForeground }]}>Online</Text>
@@ -65,12 +67,15 @@ export default function HomeScreen() {
           </View>
           <View style={styles.headerRight}>
             <Pressable
-              onPress={() => router.push('/(tabs)/connect')}
+              onPress={() => router.push('/(tabs)/settings')}
               style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}
             >
               <Ionicons name="settings-outline" size={18} color={colors.foreground} />
             </Pressable>
-            <Pressable style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+            <Pressable
+              onPress={() => router.push('/(tabs)/home/live-alerts')}
+              style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}
+            >
               <Ionicons name="notifications-outline" size={18} color={colors.foreground} />
               <View style={styles.notifDot} />
             </Pressable>
@@ -226,7 +231,7 @@ export default function HomeScreen() {
               <View style={styles.envItem}>
                 <Ionicons name="cloud" size={20} color={colors.sky400} />
                 <View>
-                  <Text style={[styles.envValue, { color: colors.foreground }]}>68°F</Text>
+                  <Text style={[styles.envValue, { color: colors.foreground }]}>83°F</Text>
                   <Text style={[styles.envLabel, { color: colors.mutedForeground }]}>Partly Cloudy</Text>
                 </View>
               </View>
@@ -234,8 +239,8 @@ export default function HomeScreen() {
               <View style={styles.envItem}>
                 <Ionicons name="location" size={20} color={colors.indigo400} />
                 <View>
-                  <Text style={[styles.envValue, { color: colors.foreground }]}>Home</Text>
-                  <Text style={[styles.envLabel, { color: colors.mutedForeground }]}>Backyard</Text>
+                  <Text style={[styles.envValue, { color: colors.foreground }]}>Outdoors</Text>
+                  <Text style={[styles.envLabel, { color: colors.mutedForeground }]}>Zachry Engineering Building</Text>
                 </View>
               </View>
             </View>

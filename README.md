@@ -8,13 +8,18 @@ Here are all external packages used in this project and why
 - Microsoft.Extensions.Logging & Microsoft.Extensions.Logging.Console \
     These packages are for logging issues to the console. This can be used for debugging and helping the programmer follow what is happening in the program.
 
-# VEST App Start Guide
+# VEST App Start Guide (no bluetooth)
 1. cd VEST_expo_app
 2. npm install 
 3. npx expo start
 4. Scan QR code with phone (have Expo Go app installed)
 
-# Running ios dev build:
+# EAS Build (run on your hardware through expo servers)
+npx eas-cli@latest
+npx eas-cli@latest login
+... WIP
+
+# MAC ONLY Running ios dev build:
 
  https://docs.expo.dev/get-started/set-up-your-environment/?mode=development-build&buildEnv=local&platform=ios&device=physical#plug-in-your-device-via-usb-and-enable-developer-mode
 

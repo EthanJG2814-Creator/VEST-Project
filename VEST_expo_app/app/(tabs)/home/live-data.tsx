@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -18,9 +18,23 @@ import { FontSizes, BorderRadius } from '@/constants/theme';
 
 const CHART_W = Dimensions.get('window').width - 64;
 const CHART_H = 120;
+const UPDATE_INTERVAL_MS = 5_000;
+
+const HEART_RATE_MEAN = 110;
+const HEART_RATE_SD = 2;
+const RESPIRATION_MEAN = 20;
+const RESPIRATION_SD = 1;
+
+function randomNormal(mean: number, sd: number) {
+  // Box-Muller transform for normally distributed samples.
+  const u1 = Math.max(Math.random(), Number.EPSILON);
+  const u2 = Math.random();
+  const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return mean + z0 * sd;
+}
 
 function generateData(count: number, base: number, variance: number) {
-  return Array.from({ length: count }, (_, i) => base + Math.sin(i / 3) * variance + (Math.random() - 0.5) * variance * 0.5);
+  return Array.from({ length: count }, () => randomNormal(base, variance));
 }
 
 function buildPath(data: number[], w: number, h: number, padding = 10) {
@@ -79,23 +93,22 @@ function MiniChart({
 export default function LiveDataScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
-  const [hrData, setHrData] = useState(() => generateData(20, 75, 12));
-  const [respData, setRespData] = useState(() => generateData(20, 20, 4));
+  const [hrData, setHrData] = useState(() => generateData(20, HEART_RATE_MEAN, HEART_RATE_SD));
+  const [respData, setRespData] = useState(() => generateData(20, RESPIRATION_MEAN, RESPIRATION_SD));
 
   useEffect(() => {
     const interval = setInterval(() => {
       setHrData(prev => {
         const next = [...prev.slice(1)];
-        const last = prev[prev.length - 1];
-        next.push(70 + Math.sin(Date.now() / 2000) * 12 + (Math.random() - 0.5) * 6);
+        next.push(randomNormal(HEART_RATE_MEAN, HEART_RATE_SD));
         return next;
       });
       setRespData(prev => {
         const next = [...prev.slice(1)];
-        next.push(20 + Math.cos(Date.now() / 3000) * 3 + (Math.random() - 0.5) * 2);
+        next.push(randomNormal(RESPIRATION_MEAN, RESPIRATION_SD));
         return next;
       });
-    }, 1000);
+    }, UPDATE_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
 
@@ -176,6 +189,23 @@ export default function LiveDataScreen() {
           </View>
         </GlassCard>
 
+        <Pressable onPress={() => router.push('/(tabs)/home/sensor-graphs')}>
+          <GlassCard>
+            <View style={styles.allSensorsRow}>
+              <View style={[styles.allSensorsIcon, { backgroundColor: 'rgba(59,130,246,0.12)' }]}> 
+                <Ionicons name="analytics" size={18} color={colors.blue500} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.allSensorsTitle, { color: colors.foreground }]}>All Sensor Channels</Text>
+                <Text style={[styles.allSensorsDesc, { color: colors.mutedForeground }]}>
+                  Thermistor, ECG, stretch, MPU1 and MPU2 outputs
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+            </View>
+          </GlassCard>
+        </Pressable>
+
         {/* Other Vitals */}
         <View style={styles.otherGrid}>
           <GlassCard style={{ flex: 1 }}>
@@ -217,6 +247,11 @@ const styles = StyleSheet.create({
   chartValue: { fontSize: FontSizes.title3, fontWeight: '700' },
   chartUnit: { fontSize: FontSizes.caption, fontWeight: '500' },
   chartBody: { paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center' },
+
+  allSensorsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  allSensorsIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  allSensorsTitle: { fontSize: FontSizes.subhead, fontWeight: '700' },
+  allSensorsDesc: { fontSize: FontSizes.caption, marginTop: 2 },
 
   otherGrid: { flexDirection: 'row', gap: 12 },
   miniHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },

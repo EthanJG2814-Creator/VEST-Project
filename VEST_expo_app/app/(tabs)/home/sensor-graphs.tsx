@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,19 +15,43 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { GlassCard } from '@/components/GlassCard';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { FontSizes } from '@/constants/theme';
+import {
+  ARDUINO_METRIC_CONFIG,
+  type ArduinoMetricConfig,
+  type ArduinoMetricKey,
+  type ArduinoMetricSection,
+  type ArduinoSensorPacket,
+  createMockArduinoPacket,
+  createMockArduinoTimeline,
+} from '@/constants/arduino-sensors';
 
 const CHART_W = Dimensions.get('window').width - 64;
 const CHART_H = 100;
+const PREVIEW_UPDATE_INTERVAL_MS = 1_000;
+const CHART_POINTS = 30;
+const SECTION_ORDER: ArduinoMetricSection[] = ['Thermistor', 'ECG', 'Stretch', 'MPU #1', 'MPU #2'];
 
-function generateData(count: number, base: number, variance: number) {
-  return Array.from({ length: count }, (_, i) => base + Math.sin(i / 4) * variance + (Math.random() - 0.5) * variance * 0.3);
+function getMetricSeries(packets: ArduinoSensorPacket[], key: ArduinoMetricKey) {
+  let lastValue = 0;
+  return packets.map((packet) => {
+    const value = packet[key];
+    if (value === null) {
+      return lastValue;
+    }
+    lastValue = value;
+    return value;
+  });
 }
 
 function buildPath(data: number[], w: number, h: number, pad = 8) {
-  const min = Math.min(...data) - 3;
-  const max = Math.max(...data) + 3;
+  const minValue = Math.min(...data);
+  const maxValue = Math.max(...data);
+  const margin = Math.max((maxValue - minValue) * 0.15, 1);
+  const min = minValue - margin;
+  const max = maxValue + margin;
+  const range = Math.max(max - min, Number.EPSILON);
   const step = w / (data.length - 1);
-  const y = (v: number) => pad + ((max - v) / (max - min)) * (h - pad * 2);
+  const y = (v: number) => pad + ((max - v) / range) * (h - pad * 2);
   let d = `M 0 ${y(data[0])}`;
   for (let i = 1; i < data.length; i++) {
     const x = i * step;
@@ -37,15 +61,41 @@ function buildPath(data: number[], w: number, h: number, pad = 8) {
   return d;
 }
 
-const sensors = [
-  { name: 'Heart Rate', unit: 'BPM', icon: 'heart' as const, color: '#F43F5E', data: generateData(30, 78, 10) },
-  { name: 'Respiration', unit: 'RPM', icon: 'water' as const, color: '#3B82F6', data: generateData(30, 20, 4) },
-  { name: 'Temperature', unit: '°F', icon: 'thermometer' as const, color: '#F97316', data: generateData(30, 101.5, 0.8) },
-];
+function formatMetricValue(metric: ArduinoMetricConfig, value: number | null) {
+  if (metric.key === 'ecgRaw' && value === null) {
+    return 'LEAD_OFF';
+  }
+  if (value === null) {
+    return '--';
+  }
+
+  return `${value.toFixed(metric.decimals)} ${metric.unit}`;
+}
 
 export default function SensorGraphsScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+  const [packets, setPackets] = useState<ArduinoSensorPacket[]>(() =>
+    createMockArduinoTimeline(CHART_POINTS, 100)
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPackets((prev) => [...prev.slice(1), createMockArduinoPacket()]);
+    }, PREVIEW_UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const groupedMetrics = useMemo(() => {
+    return ARDUINO_METRIC_CONFIG.reduce(
+      (acc, metric) => {
+        (acc[metric.section] ??= []).push(metric);
+        return acc;
+      },
+      {} as Record<ArduinoMetricSection, ArduinoMetricConfig[]>
+    );
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -65,41 +115,50 @@ export default function SensorGraphsScreen() {
           <View style={{ width: 36 }} />
         </View>
 
-        {sensors.map((s) => {
-          const current = s.data[s.data.length - 1];
-          return (
-            <Pressable key={s.name} onPress={() => router.push('/(tabs)/home/sensor-details')}>
-              <GlassCard noPadding>
-                <View style={styles.chartHeader}>
-                  <View style={styles.chartLabelRow}>
-                    <View style={[styles.chartIcon, { backgroundColor: `${s.color}20` }]}>
-                      <Ionicons name={s.icon} size={14} color={s.color} />
+
+        {SECTION_ORDER.map((section) => (
+          <View key={section} style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{section.toUpperCase()}</Text>
+            {(groupedMetrics[section] ?? []).map((metric) => {
+              const series = getMetricSeries(packets, metric.key);
+              const latestValue = packets[packets.length - 1]?.[metric.key] ?? null;
+              const gradientId = `grad-${metric.key}`;
+
+              return (
+                <GlassCard key={metric.key} noPadding>
+                  <View style={styles.chartHeader}>
+                    <View style={styles.chartLabelRow}>
+                      <View style={[styles.chartIcon, { backgroundColor: `${metric.color}20` }]}> 
+                        <Ionicons name={metric.icon} size={14} color={metric.color} />
+                      </View>
+                      <Text style={[styles.chartLabel, { color: colors.mutedForeground }]}>
+                        {metric.label.toUpperCase()}
+                      </Text>
                     </View>
-                    <Text style={[styles.chartLabel, { color: colors.mutedForeground }]}>{s.name.toUpperCase()}</Text>
+                    <Text style={[styles.chartValue, { color: colors.foreground }]}>
+                      {formatMetricValue(metric, latestValue)}
+                    </Text>
                   </View>
-                  <Text style={[styles.chartValue, { color: colors.foreground }]}>
-                    {s.name === 'Temperature' ? current.toFixed(1) : Math.round(current)} <Text style={{ fontSize: FontSizes.caption, color: colors.mutedForeground }}>{s.unit}</Text>
-                  </Text>
-                </View>
-                <View style={styles.chartBody}>
-                  <Svg width={CHART_W} height={CHART_H}>
-                    <Defs>
-                      <SvgGradient id={`grad-${s.name}`} x1="0" y1="0" x2="0" y2="1">
-                        <Stop offset="0%" stopColor={s.color} stopOpacity={0.3} />
-                        <Stop offset="100%" stopColor={s.color} stopOpacity={0} />
-                      </SvgGradient>
-                    </Defs>
-                    <Path
-                      d={`${buildPath(s.data, CHART_W, CHART_H)} L ${CHART_W} ${CHART_H} L 0 ${CHART_H} Z`}
-                      fill={`url(#grad-${s.name})`}
-                    />
-                    <Path d={buildPath(s.data, CHART_W, CHART_H)} stroke={s.color} strokeWidth={2} fill="none" />
-                  </Svg>
-                </View>
-              </GlassCard>
-            </Pressable>
-          );
-        })}
+                  <View style={styles.chartBody}>
+                    <Svg width={CHART_W} height={CHART_H}>
+                      <Defs>
+                        <SvgGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                          <Stop offset="0%" stopColor={metric.color} stopOpacity={0.3} />
+                          <Stop offset="100%" stopColor={metric.color} stopOpacity={0} />
+                        </SvgGradient>
+                      </Defs>
+                      <Path
+                        d={`${buildPath(series, CHART_W, CHART_H)} L ${CHART_W} ${CHART_H} L 0 ${CHART_H} Z`}
+                        fill={`url(#${gradientId})`}
+                      />
+                      <Path d={buildPath(series, CHART_W, CHART_H)} stroke={metric.color} strokeWidth={2} fill="none" />
+                    </Svg>
+                  </View>
+                </GlassCard>
+              );
+            })}
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -111,6 +170,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
   backBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: FontSizes.title2, fontWeight: '700', letterSpacing: -0.5 },
+  note: { fontSize: FontSizes.subhead, lineHeight: 20 },
+  sectionBlock: { gap: 8 },
+  sectionTitle: { fontSize: FontSizes.caption, fontWeight: '700', letterSpacing: 1, marginLeft: 4 },
   chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   chartLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   chartIcon: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },

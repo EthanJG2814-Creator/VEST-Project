@@ -32,7 +32,7 @@ const sections: SettingsSection[] = [
     title: 'Account',
     items: [
       { icon: 'person-outline', label: 'Profile', path: '/(auth)/sign-in' },
-      { icon: 'notifications-outline', label: 'Notifications', path: '' },
+      { icon: 'notifications-outline', label: 'Notifications', path: '/(tabs)/home/live-alerts' },
       { icon: 'shield-outline', label: 'Privacy & Security', path: '' },
     ],
   },

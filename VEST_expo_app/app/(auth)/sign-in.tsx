@@ -14,34 +14,13 @@ import Animated, { FadeIn, FadeInLeft } from 'react-native-reanimated';
 import { GlassCard } from '@/components/GlassCard';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { FontSizes, Spacing, BorderRadius } from '@/constants/theme';
-
-const profiles = [
-  {
-    id: 1,
-    name: 'Max',
-    breed: 'Golden Retriever',
-    age: '3 yrs',
-    image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop',
-  },
-  {
-    id: 2,
-    name: 'Bella',
-    breed: 'French Bulldog',
-    age: '5 yrs',
-    image: 'https://images.unsplash.com/photo-1648817931653-6cf0ccfbfab0?w=200&h=200&fit=crop',
-  },
-  {
-    id: 3,
-    name: 'Charlie',
-    breed: 'Corgi',
-    age: '2 yrs',
-    image: 'https://images.unsplash.com/photo-1655930251344-c2a67323dac1?w=200&h=200&fit=crop',
-  },
-];
+import { DOG_PROFILES } from '@/constants/dog-profiles';
+import { useDogProfile } from '@/hooks/use-dog-profile';
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
+  const { selectedProfile, setSelectedProfile } = useDogProfile();
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#0F172A' : colors.background }]}>
@@ -60,16 +39,26 @@ export default function SignInScreen() {
         </Animated.View>
 
         <View style={styles.profileList}>
-          {profiles.map((dog, i) => (
+          {DOG_PROFILES.map((dog, i) => (
             <Animated.View
               key={dog.id}
               entering={FadeInLeft.delay(i * 100).duration(400)}
             >
               <Pressable
-                onPress={() => router.replace('/(tabs)/home')}
+                onPress={() => {
+                  setSelectedProfile(dog);
+                  router.replace('/(tabs)/home');
+                }}
                 style={({ pressed }) => pressed && { transform: [{ scale: 0.97 }] }}
               >
-                <GlassCard style={styles.profileCard}>
+                <GlassCard
+                  style={[
+                    styles.profileCard,
+                    selectedProfile.id === dog.id && {
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
                   <View style={styles.profileRow}>
                     <Image
                       source={{ uri: dog.image }}
