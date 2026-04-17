@@ -31,6 +31,7 @@
       "package": "com.anonymous.VEST_expo_app"
     },
     "web": {
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
@@ -64,6 +65,7 @@
       "expo-web-browser"
     ],
     "experiments": {
+      "baseUrl": "/VEST-Project",
       "typedRoutes": true,
       "reactCompiler": true
     },

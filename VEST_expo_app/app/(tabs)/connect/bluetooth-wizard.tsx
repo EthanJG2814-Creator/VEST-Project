@@ -66,7 +66,7 @@ export default function BluetoothWizardScreen() {
     },
     {
       title: isScanning ? 'Scanning for peripherals…' : 'Scan for peripherals',
-      desc: 'Discovers nearby devices that match the VEST name.',
+      desc: 'Discovers nearby devices and prioritizes ESP32/VEST names first.',
       icon: 'radio-outline' as const,
       done: !isScanning && allDevices.length > 0,
       action: isScanning ? stopScan : scanForPeripherals,

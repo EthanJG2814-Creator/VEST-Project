@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -80,10 +81,18 @@ export default function SignInScreen() {
           ))}
 
           <Animated.View entering={FadeIn.delay(400).duration(400)}>
-            <Pressable style={[styles.addButton, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }]}>
+            <Pressable
+              onPress={() =>
+                Alert.alert(
+                  'Work in Progress',
+                  'Add New Profile is not available yet. This feature is coming soon.'
+                )
+              }
+              style={[styles.addButton, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }]}
+            >
               <Ionicons name="add" size={22} color={colors.mutedForeground} />
               <Text style={[styles.addText, { color: colors.mutedForeground }]}>
-                Add New Profile
+                Add New Profile (Work in Progress)
               </Text>
             </Pressable>
           </Animated.View>

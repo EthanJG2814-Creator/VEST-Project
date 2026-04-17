@@ -14,11 +14,33 @@ import {
 const DATA_SERVICE_UUID = '19b10000-e8f2-537e-4f6c-d104768a1214';
 const DATA_CHARACTERISTIC_UUID = '19b10001-e8f2-537e-4f6c-d104768a1217';
 const TARGET_DEVICE_NAME = 'ESP32';
+const TARGET_DEVICE_NAME_HINTS = [TARGET_DEVICE_NAME, 'VEST', 'Arduino'];
 const CHUNK_SIZE = 182;
 const WEB_BLE_UNAVAILABLE_MESSAGE =
   'Bluetooth is disabled in web preview. Use an iOS/Android dev build for BLE.';
 
 export type BleLog = { message: string; ts: number };
+
+function getDeviceDisplayName(device: Device) {
+  return device.localName ?? device.name ?? 'Unknown peripheral';
+}
+
+function getDevicePriority(device: Device) {
+  const displayName = getDeviceDisplayName(device).toLowerCase();
+  if (!displayName || displayName === 'unknown peripheral') {
+    return 0;
+  }
+
+  if (displayName === TARGET_DEVICE_NAME.toLowerCase()) {
+    return 2;
+  }
+
+  const hasKnownHint = TARGET_DEVICE_NAME_HINTS.some((hint) =>
+    displayName.includes(hint.toLowerCase())
+  );
+
+  return hasKnownHint ? 1 : 0;
+}
 
 export function useBle() {
   const bleManager = useMemo(() => {
@@ -233,19 +255,24 @@ export function useBle() {
 
       if (!device) return;
 
-      const advertisedName = device.localName ?? device.name;
-      if (advertisedName !== TARGET_DEVICE_NAME) {
-        return;
-      }
-
-      const friendlyName = device.name ?? device.localName ?? 'Unknown peripheral';
+      const friendlyName = getDeviceDisplayName(device);
       setAllDevices((prev) => {
-        if (!isDuplicateDevice(prev, device)) {
-          log(`Found peripheral: ${friendlyName}`);
-          return [...prev, device];
+        if (isDuplicateDevice(prev, device)) {
+          return prev;
         }
-        return prev;
+
+        const next = [...prev, device].sort(
+          (a, b) => getDevicePriority(b) - getDevicePriority(a)
+        );
+
+        return next.slice(0, 40);
       });
+
+      log(
+        getDevicePriority(device) > 0
+          ? `Found target-like peripheral: ${friendlyName}`
+          : `Found peripheral: ${friendlyName}`
+      );
     });
 
     scanTimeout.current = setTimeout(() => {

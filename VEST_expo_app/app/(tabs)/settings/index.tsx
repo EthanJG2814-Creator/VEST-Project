@@ -33,14 +33,14 @@ const sections: SettingsSection[] = [
     items: [
       { icon: 'person-outline', label: 'Profile', path: '/(auth)/sign-in' },
       { icon: 'notifications-outline', label: 'Notifications', path: '/(tabs)/home/live-alerts' },
-      { icon: 'shield-outline', label: 'Privacy & Security', path: '' },
+      { icon: 'shield-outline', label: 'Privacy & Security', path: '/(tabs)/settings/privacy-security' },
     ],
   },
   {
     title: 'Device',
     items: [
       { icon: 'phone-portrait-outline', label: 'Device Info', path: '/(tabs)/settings/device-info' },
-      { icon: 'help-circle-outline', label: 'Help & Support', path: '' },
+      { icon: 'help-circle-outline', label: 'Help & Support', path: '/(tabs)/settings/help-support' },
       { icon: 'cloud-download-outline', label: 'Firmware Updates', path: '/(tabs)/settings/firmware-updates' },
     ],
   },
@@ -96,6 +96,7 @@ export default function SettingsScreen() {
 
         {/* Log Out */}
         <Pressable
+          onPress={() => router.push('/(tabs)/settings/logout' as any)}
           style={[styles.logoutBtn, { backgroundColor: 'rgba(239,68,68,0.1)' }]}
         >
           <Ionicons name="log-out-outline" size={18} color="#F87171" />
